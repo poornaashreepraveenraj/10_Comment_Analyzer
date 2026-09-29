@@ -2,14 +2,20 @@ const assert = require('node:assert/strict');
 const { after, test } = require('node:test');
 const { classifyBatch } = require('../src/nlpPipeline');
 
-const originalApiKey = process.env.GEMINI_API_KEY;
+const originalApiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 after(() => {
-  if (originalApiKey === undefined) delete process.env.GEMINI_API_KEY;
-  else process.env.GEMINI_API_KEY = originalApiKey;
+  if (originalApiKey === undefined) {
+    delete process.env.GOOGLE_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+  } else {
+    process.env.GOOGLE_API_KEY = originalApiKey;
+    process.env.GEMINI_API_KEY = originalApiKey;
+  }
 });
 
 test('classifies every comment when the thread exceeds one model batch', async () => {
+  process.env.GOOGLE_API_KEY = 'your_gemini_api_key_here';
   process.env.GEMINI_API_KEY = 'your_gemini_api_key_here';
   const comments = Array.from({ length: 61 }, (_, index) => ({
     id: `comment-${index}`,

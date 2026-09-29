@@ -1,360 +1,1321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comment Analyzer — by C:S</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Commently</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500&family=Lora:ital,wght@0,400;1,400&display=swap');
 
-    :root {
-      --bg:      #0a0a0a;
-      --bg-2:    #111111;
-      --bg-3:    #1a1a1a;
-      --border:  rgba(202,202,202,0.08);
-      --bone:    #cacaca;
-      --iron:    #727272;
-      --white:   #ffffff;
-      --coral:   #ff7777;
-      --blue:    #70b5ff;
-      --green:   #5cd698;
-      --font:    'Inter', ui-sans-serif, system-ui, sans-serif;
-    }
+:root {
+  --ink: #17191c;
+  --paper: #ffffff;
+  --mist: #f2f2f3;
+  --fog: #fafafb;
+  --slate: #777b86;
+  --ash: #979799;
+  --smoke: #a3a6af;
+  --peach: #fbe1d1;
+  --sienna: #5d2a1a;
+  --border: #ececec;
 
-    html, body { height: 100%; }
-    body {
-      background: var(--bg);
-      color: var(--bone);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
+  --shadow-card: 0 0 0 1px rgba(4,23,43,0.05), 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.06);
+  --shadow-sm: 0 0 0 1px rgba(4,23,43,0.05), 0 4px 24px 0 rgba(0,0,0,0.06);
 
-    /* ── Top nav ── */
-    .nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 48px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(12px);
-      z-index: 100;
-    }
-    .nav-logo { font-size: 17px; color: var(--white); letter-spacing: -0.3px; }
-    .nav-links { display: flex; gap: 32px; list-style: none; }
-    .nav-links a { font-size: 13px; color: var(--iron); text-decoration: none; transition: color 0.15s; }
-    .nav-links a:hover { color: var(--bone); }
-    .nav-cta {
-      background: var(--bone); color: #000;
-      font-family: var(--font); font-size: 13px; font-weight: 600;
-      padding: 9px 20px; border: none; cursor: pointer; transition: background 0.15s;
-      text-decoration: none; display: inline-block;
-    }
-    .nav-cta:hover { background: var(--white); }
+  --serif: 'Lora', 'Georgia', ui-serif, serif;
+  --sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 120px 80px 80px;
-      position: relative;
-    }
+  --r-card: 24px;
+  --r-input: 16px;
+  --r-pill: 9999px;
+  --r-sm: 12px;
+}
 
-    /* Subtle grid backdrop */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 64px 64px;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
-      pointer-events: none;
-    }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .hero-eyebrow {
-      font-size: 11px;
-      letter-spacing: 1.2px;
-      color: var(--iron);
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .hero-eyebrow::before {
-      content: '';
-      display: inline-block;
-      width: 24px; height: 1px;
-      background: var(--coral);
-    }
+html, body {
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--fog);
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+}
 
-    .hero-title {
-      font-size: clamp(52px, 8vw, 96px);
-      font-weight: 300;
-      letter-spacing: -3px;
-      line-height: 0.95;
-      color: var(--white);
-      max-width: 900px;
-      margin-bottom: 32px;
-    }
-    .hero-title em {
-      font-style: normal;
-      color: var(--coral);
-    }
+/* ── Shell ── */
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 100vh;
+  height: 100vh;
+}
 
-    .hero-sub {
-      font-size: 17px;
-      color: var(--iron);
-      max-width: 520px;
-      line-height: 1.6;
-      margin-bottom: 48px;
-    }
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--paper);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 32px;
+  overflow-y: auto;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
 
-    .hero-actions { display: flex; gap: 16px; align-items: center; }
-    .btn-primary {
-      background: var(--white); color: #000;
-      font-family: var(--font); font-size: 14px; font-weight: 600;
-      padding: 14px 32px; border: none; cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-      text-decoration: none; display: inline-block;
-    }
-    .btn-primary:hover { background: #e0e0e0; transform: translateY(-1px); }
-    .btn-ghost {
-      font-size: 14px; color: var(--bone);
-      background: none; border: 1px solid var(--border);
-      padding: 13px 28px; cursor: pointer; transition: border-color 0.15s;
-      text-decoration: none; display: inline-block; font-family: var(--font);
-    }
-    .btn-ghost:hover { border-color: var(--bone); }
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  background: var(--ink);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+.logo-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
 
-    /* ── Features ── */
-    .features {
-      padding: 120px 80px;
-      border-top: 1px solid var(--border);
-    }
-    .section-label {
-      font-size: 11px; letter-spacing: 1px; color: var(--iron);
-      margin-bottom: 56px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .section-label::before {
-      content: ''; display: inline-block;
-      width: 24px; height: 1px; background: var(--bone);
-    }
+.sidebar-section { display: flex; flex-direction: column; gap: 2px; }
+.sidebar-label {
+  font-size: 12px;
+  color: var(--smoke);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--slate);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--sans);
+}
+.nav-link:hover { background: var(--mist); color: var(--ink); }
+.nav-link.active { background: var(--mist); color: var(--ink); font-weight: 500; }
+.nav-link .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  font-size: 11px;
+  background: var(--mist);
+  color: var(--slate);
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+}
+.nav-link.active .nav-badge { background: var(--ink); color: white; }
 
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-    }
-    .feature-card {
-      background: var(--bg);
-      padding: 36px 28px;
-      transition: background 0.2s;
-    }
-    .feature-card:hover { background: var(--bg-2); }
+.video-list { display: flex; flex-direction: column; gap: 2px; }
+.video-item {
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.video-item:hover { background: var(--mist); }
+.video-item.active { background: var(--mist); }
+.video-item-title {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 450;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.video-item-meta { font-size: 12px; color: var(--smoke); margin-top: 2px; }
+.video-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
 
-    .feature-badge {
-      display: inline-block;
-      font-size: 10px; letter-spacing: 0.6px; font-weight: 500;
-      padding: 3px 10px; margin-bottom: 20px;
-    }
-    .fb-theme      { color: var(--bone);  border: 1px solid rgba(202,202,202,0.25); }
-    .fb-question   { color: var(--blue);  background: rgba(112,181,255,0.1); }
-    .fb-complaint  { color: var(--coral); background: rgba(255,119,119,0.1); }
-    .fb-opportunity{ color: var(--green); background: rgba(92,214,152,0.1); }
+/* ── Main ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100vh;
+}
 
-    .feature-title { font-size: 18px; font-weight: 400; color: var(--white); margin-bottom: 10px; letter-spacing: -0.3px; }
-    .feature-desc  { font-size: 13px; color: var(--iron); line-height: 1.65; }
+/* ── Topbar ── */
+.topbar {
+  background: var(--paper);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
 
-    /* ── How it works ── */
-    .how {
-      padding: 120px 80px;
-      border-top: 1px solid var(--border);
-    }
-    .how-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 48px;
-      margin-top: 56px;
-    }
-    .step-number {
-      font-size: 48px; font-weight: 300; color: var(--bg-3);
-      letter-spacing: -2px; margin-bottom: 16px;
-    }
-    .step-title { font-size: 16px; color: var(--white); margin-bottom: 8px; }
-    .step-desc  { font-size: 13px; color: var(--iron); line-height: 1.65; }
+.url-input-wrap {
+  flex: 1;
+  position: relative;
+  max-width: 560px;
+}
+.url-input {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--mist);
+  border: 1px solid transparent;
+  border-radius: var(--r-input);
+  padding: 10px 16px;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.url-input::placeholder { color: var(--smoke); }
+.url-input:focus { border-color: var(--ink); background: var(--paper); }
 
-    /* ── Metrics preview ── */
-    .preview {
-      padding: 80px;
-      border-top: 1px solid var(--border);
-      background: var(--bg-2);
-    }
-    .preview-inner {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .preview-title {
-      font-size: 36px; font-weight: 300; letter-spacing: -1.5px; color: var(--white);
-      margin-bottom: 40px;
-    }
-    .preview-metrics {
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 40px;
-    }
-    .pm-card {
-      border: 1px solid var(--border); padding: 20px;
-    }
-    .pm-label { font-size: 10px; letter-spacing: 0.8px; color: var(--iron); margin-bottom: 10px; }
-    .pm-value { font-size: 36px; font-weight: 300; letter-spacing: -2px; color: var(--white); }
-    .pm-coral { color: var(--coral); }
-    .pm-green { color: var(--green); }
+.analyse-btn {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: var(--ink);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.analyse-btn:hover { opacity: 0.85; }
+.analyse-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ── CTA section ── */
-    .cta-section {
-      padding: 120px 80px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-    .cta-title {
-      font-size: clamp(40px, 6vw, 72px);
-      font-weight: 300; letter-spacing: -2.5px; color: var(--white);
-      margin-bottom: 24px; line-height: 1;
-    }
-    .cta-sub {
-      font-size: 15px; color: var(--iron); margin-bottom: 40px;
-    }
+.topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.ghost-btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--slate);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.ghost-btn:hover { border-color: var(--ink); color: var(--ink); }
 
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 28px 80px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .footer-logo { font-size: 14px; color: var(--iron); }
-    .footer-note { font-size: 12px; color: var(--bg-3); }
-  </style>
+/* ── Content ── */
+.content { padding: 32px; display: flex; flex-direction: column; gap: 28px; flex: 1; }
+
+/* ── Page heading ── */
+.page-head { display: flex; flex-direction: column; gap: 4px; }
+.page-title {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+.page-meta { font-size: 14px; color: var(--slate); }
+
+/* ── Stat cards ── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.stat-card {
+  background: var(--paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stat-label { font-size: 13px; color: var(--slate); }
+.stat-value {
+  font-family: var(--sans);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+.stat-delta {
+  font-size: 13px;
+  color: var(--slate);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delta-up { color: #2d7a3a; }
+.delta-down { color: #c0392b; }
+
+/* ── Chart row ── */
+.chart-row {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1fr;
+  gap: 16px;
+}
+.chart-card {
+  background: var(--paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.chart-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.chart-sub { font-size: 12px; color: var(--smoke); margin-top: 2px; }
+.chart-area { position: relative; }
+
+/* ── Peach summary card ── */
+.summary-card {
+  background: var(--peach);
+  border-radius: var(--r-card);
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+.summary-left { display: flex; flex-direction: column; gap: 16px; }
+.summary-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sienna);
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+.summary-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--sienna);
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+.summary-body { font-size: 14px; color: var(--sienna); line-height: 1.6; opacity: 0.85; }
+.summary-right { display: flex; flex-direction: column; gap: 12px; }
+.finding {
+  background: rgba(93,42,26,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.finding-dot {
+  width: 6px; height: 6px;
+  background: var(--sienna);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.finding-text { font-size: 13px; color: var(--sienna); line-height: 1.5; }
+
+/* ── Comment section ── */
+.comment-section {
+  background: var(--paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.comment-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.comment-tabs { display: flex; gap: 0; }
+.tab-btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--slate);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: color .12s, border-color .12s;
+}
+.tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 500; }
+.tab-btn:hover:not(.active) { color: var(--ink); }
+
+.comment-table { width: 100%; border-collapse: collapse; }
+.comment-table th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--smoke);
+  text-align: left;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.01em;
+}
+.comment-table td {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--ink);
+  vertical-align: top;
+}
+.comment-table tr:last-child td { border-bottom: none; }
+.comment-table tr:hover td { background: var(--fog); }
+
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cat-Theme     { background: #eef2ff; color: #3730a3; }
+.cat-Question  { background: #ecfdf5; color: #065f46; }
+.cat-Complaint { background: #fff1f2; color: #be123c; }
+.cat-Opportunity { background: #fef9c3; color: #854d0e; }
+.cat-Spam      { background: var(--mist); color: var(--ash); }
+
+.sentiment-tag { font-size: 12px; }
+.sent-Positive { color: #2d7a3a; }
+.sent-Negative { color: #c0392b; }
+.sent-Neutral  { color: var(--slate); }
+
+.comment-text-cell { max-width: 360px; line-height: 1.45; }
+.reply-chip {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--slate);
+  background: var(--mist);
+  border-radius: 8px;
+  padding: 4px 10px;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.priority-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.p2 { background: #ef4444; }
+.p1 { background: #f59e0b; }
+.p0 { background: var(--mist); border: 1px solid var(--border); }
+
+/* ── Feature chips row ── */
+.features-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.feature-chip {
+  background: var(--paper);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.feature-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--mist);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.feature-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.feature-desc { font-size: 12px; color: var(--slate); margin-top: 2px; line-height: 1.45; }
+.feature-soon {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--slate);
+  background: var(--mist);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Word cloud ── */
+.wordcloud-card {
+  background: var(--paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+}
+.wordcloud-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+  align-items: center;
+}
+.word-tag {
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  background: var(--mist);
+  color: var(--ink);
+  cursor: default;
+  transition: background .12s;
+  font-weight: 450;
+}
+.word-tag:hover { background: var(--peach); color: var(--sienna); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--ink);
+  color: white;
+  font-size: 13px;
+  font-family: var(--sans);
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: var(--shadow-card);
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav class="nav">
-    <div class="nav-logo">C:S</div>
-    <ul class="nav-links">
-      <li><a href="#">Features</a></li>
-      <li><a href="#">How it Works</a></li>
-      <li><a href="/dashboard.html">Dashboard</a></li>
-    </ul>
-    <a href="/dashboard.html" class="nav-cta">Open Dashboard →</a>
-  </nav>
+<div class="shell">
 
-  <!-- Hero -->
-  <section class="hero">
-    <p class="hero-eyebrow">INSTAGRAM COMMENT ANALYZER</p>
-    <h1 class="hero-title">Turn comments<br/>into <em>content strategy.</em></h1>
-    <p class="hero-sub">Analyze every comment and reply on posts managed by your connected Instagram professional account. Paginated fetching and batched AI classification turn the full thread into useful categories.</p>
-    <div class="hero-actions">
-      <a href="/dashboard.html" class="btn-primary">Start Analyzing →</a>
-      <a href="#how" class="btn-ghost">See How It Works</a>
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">C</div>
+      <span class="logo-name">Commently</span>
     </div>
-  </section>
 
-  <!-- Features -->
-  <section class="features" id="features">
-    <p class="section-label">PILLAR CATEGORIES</p>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <span class="feature-badge fb-theme">THEME</span>
-        <h3 class="feature-title">Sentiment & Hype</h3>
-        <p class="feature-desc">General praise, opinions, and community sentiment that define your brand perception.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-badge fb-question">QUESTION</span>
-        <h3 class="feature-title">Audience Questions</h3>
-        <p class="feature-desc">How-tos, pricing queries, tool requests — high-value prompts that drive engagement content.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-badge fb-complaint">COMPLAINT</span>
-        <h3 class="feature-title">Priority Complaints</h3>
-        <p class="feature-desc">Bug reports, frustration signals, and dissatisfaction flagged for immediate triage.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-badge fb-opportunity">OPPORTUNITY</span>
-        <h3 class="feature-title">Content Leads</h3>
-        <p class="feature-desc">Brand collab requests, partnership signals, and high-intent leads — don't let them slip by.</p>
+    <div class="sidebar-section">
+      <div class="sidebar-label">ANALYSE</div>
+      <button class="nav-link active" onclick="setNav(this,'overview')">
+        <span class="nav-icon">◈</span> Overview
+        <span class="nav-badge">2</span>
+      </button>
+      <button class="nav-link" onclick="setNav(this,'comments')">
+        <span class="nav-icon">◻</span> Comments
+        <span class="nav-badge">16</span>
+      </button>
+      <button class="nav-link" onclick="setNav(this,'sentiment')">
+        <span class="nav-icon">◑</span> Sentiment
+      </button>
+      <button class="nav-link" onclick="setNav(this,'topics')">
+        <span class="nav-icon">◈</span> Topics
+      </button>
+      <button class="nav-link" onclick="setNav(this,'reel')">
+        <span class="nav-icon">▷</span> Prime for Reel
+        <span class="nav-badge">4</span>
+      </button>
+      <button class="nav-link" onclick="setNav(this,'opportunities')">
+        <span class="nav-icon">◆</span> Opportunities
+        <span class="nav-badge">4</span>
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">VIDEOS</div>
+      <div class="video-list">
+        <div class="video-item active" onclick="selectVideo(this)">
+          <div class="video-item-title">
+            <span class="video-dot" style="background:#fbe1d1;border:1.5px solid #e0bfae;"></span>
+            Color Grading Tutorial
+          </div>
+          <div class="video-item-meta">8 comments · Sep 28</div>
+        </div>
+        <div class="video-item" onclick="selectVideo(this)">
+          <div class="video-item-title">
+            <span class="video-dot" style="background:#d1f0e0;border:1.5px solid #a8d5bc;"></span>
+            Editing Workflow 2026
+          </div>
+          <div class="video-item-meta">8 comments · Sep 28</div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- How it works -->
-  <section class="how" id="how">
-    <p class="section-label">HOW IT WORKS</p>
-    <div class="how-grid">
+    <div style="margin-top:auto; padding: 8px 4px;">
+      <div style="font-size:12px;color:var(--smoke);line-height:1.6;">
+        Paste any YouTube URL above to analyse a new video.
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="url-input-wrap">
+        <input
+          class="url-input"
+          id="url-input"
+          type="text"
+          placeholder="Paste a YouTube URL to analyse…"
+        />
+      </div>
+      <button class="analyse-btn" onclick="analyseVideo()">Analyse →</button>
+      <div class="topbar-actions">
+        <button class="ghost-btn" onclick="exportCSV()">↓ Export CSV</button>
+        <button class="ghost-btn">⚙ Settings</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Page heading -->
+      <div class="page-head">
+        <div class="page-title"><em>Color Grading Tutorial</em> — comment analysis</div>
+        <div class="page-meta">16 comments across 2 videos · Analysed Sep 28, 2026 · Powered by Gemini</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Total comments</div>
+          <div class="stat-value" id="stat-total">16</div>
+          <div class="stat-delta"><span class="delta-up">↑ 2 videos</span> analysed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Positive sentiment</div>
+          <div class="stat-value" id="stat-positive">62<span style="font-size:20px;font-weight:400">%</span></div>
+          <div class="stat-delta"><span class="delta-up">↑ strong</span> audience warmth</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Actionable comments</div>
+          <div class="stat-value" id="stat-actionable">8</div>
+          <div class="stat-delta">Replies suggested for <span class="delta-up">all 8</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Spam filtered</div>
+          <div class="stat-value" id="stat-spam" style="color:#c0392b;">2</div>
+          <div class="stat-delta delta-down">Auto-removed</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-row">
+        <!-- Bar chart: category breakdown -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Category breakdown</div>
+              <div class="chart-sub">Distribution across all comments</div>
+            </div>
+          </div>
+          <div class="chart-area" style="height:180px;">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Line chart: sentiment over comments -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Sentiment trend</div>
+              <div class="chart-sub">Positivity score per comment batch</div>
+            </div>
+          </div>
+          <div class="chart-area" style="height:180px;">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Donut: sentiment split -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Sentiment split</div>
+              <div class="chart-sub">Non-spam comments</div>
+            </div>
+          </div>
+          <div class="chart-area" style="height:130px;display:flex;align-items:center;justify-content:center;">
+            <canvas id="donutChart" style="max-height:130px;max-width:130px;"></canvas>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--slate);display:flex;align-items:center;gap:5px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#2d7a3a;display:inline-block;"></span>Positive
+            </span>
+            <span style="font-size:12px;color:var(--slate);display:flex;align-items:center;gap:5px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#c0392b;display:inline-block;"></span>Negative
+            </span>
+            <span style="font-size:12px;color:var(--slate);display:flex;align-items:center;gap:5px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:#d4d6db;display:inline-block;"></span>Neutral
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sentiment emoji header -->
+      <div id="mood-header" style="
+        display:flex;
+        align-items:center;
+        gap:20px;
+        background:var(--paper);
+        border-radius:20px;
+        box-shadow:var(--shadow-sm);
+        padding:20px 28px;
+      ">
+        <div id="mood-emoji" style="font-size:52px;line-height:1;transition:all .4s ease;">😊</div>
+        <div>
+          <div id="mood-label" style="
+            font-family:var(--serif);
+            font-size:22px;
+            font-weight:400;
+            color:var(--ink);
+            letter-spacing:-0.3px;
+            line-height:1.2;
+          ">Overall mood is positive</div>
+          <div id="mood-sub" style="font-size:14px;color:var(--slate);margin-top:4px;">
+            62% positive sentiment across analysed comments
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div id="mood-score" style="
+            font-size:40px;
+            font-weight:500;
+            color:var(--ink);
+            letter-spacing:-1px;
+            line-height:1;
+          ">62<span style="font-size:20px;font-weight:400;color:var(--slate);">%</span></div>
+          <div style="font-size:12px;color:var(--smoke);margin-top:3px;">positive score</div>
+        </div>
+      </div>
+
+      <!-- AI Summary: Peach card -->
+      <div class="summary-card">
+        <div class="summary-left">
+          <div class="summary-eyebrow">AI HIGH-LEVEL ANALYSIS</div>
+          <div class="summary-title">Your audience is engaged and wants to learn from you.</div>
+          <div class="summary-body">
+            Viewers are responding warmly to your editing style and color work. The dominant themes are admiration for your technical skill and demand for tutorials. Two brand collab opportunities and two freelance inquiries were detected — these are high-priority leads worth responding to within 24 hours.
+          </div>
+          <div style="margin-top:4px;">
+            <span style="font-size:13px;color:var(--sienna);font-weight:450;">Overall audience health score: <strong>76 / 100</strong></span>
+          </div>
+        </div>
+        <div class="summary-right">
+          <div class="finding">
+            <div class="finding-dot"></div>
+            <div class="finding-text">A color grading tutorial is the #1 requested piece of content — 4 comments ask for it directly.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-dot"></div>
+            <div class="finding-text">Audio sync on clip 2 is flagged as a complaint in both videos — fix this before your next upload.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-dot"></div>
+            <div class="finding-text">Two brand collab requests detected (skincare, coffee shop) — both are actionable freelance leads.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-dot"></div>
+            <div class="finding-text">"The vibes are immaculate" appears in both videos — prime content for a reel hook or pinned comment.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Topic word cloud -->
+      <div class="wordcloud-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div>
+            <div class="chart-title">Top topics</div>
+            <div class="chart-sub" style="font-size:12px;color:var(--smoke);margin-top:2px;">Recurring themes extracted from comments</div>
+          </div>
+        </div>
+        <div class="wordcloud-area">
+          <span class="word-tag" style="font-size:22px;">color grading</span>
+          <span class="word-tag" style="font-size:17px;">tutorial</span>
+          <span class="word-tag" style="font-size:19px;">editing style</span>
+          <span class="word-tag" style="font-size:14px;">software</span>
+          <span class="word-tag" style="font-size:16px;">audio sync</span>
+          <span class="word-tag" style="font-size:13px;">collab</span>
+          <span class="word-tag" style="font-size:18px;">aesthetic</span>
+          <span class="word-tag" style="font-size:14px;">transitions</span>
+          <span class="word-tag" style="font-size:13px;">freelance</span>
+          <span class="word-tag" style="font-size:15px;">vibes</span>
+          <span class="word-tag" style="font-size:12px;">plugin</span>
+          <span class="word-tag" style="font-size:14px;">color look</span>
+          <span class="word-tag" style="font-size:12px;">commercial</span>
+        </div>
+      </div>
+
+      <!-- Upcoming features -->
       <div>
-        <div class="step-number">01</div>
-        <h3 class="step-title">Paste a Link</h3>
-        <p class="step-desc">Paste a permalink from the connected professional account. The analyzer finds the post and follows every available comments page.</p>
-      </div>
-      <div>
-        <div class="step-number">02</div>
-        <h3 class="step-title">Hustle Bot Filters</h3>
-        <p class="step-desc">Spam, bot activity, and promotional noise are automatically removed. Emojis are translated for accurate NLP analysis.</p>
-      </div>
-      <div>
-        <div class="step-number">03</div>
-        <h3 class="step-title">Gemini Classifies</h3>
-        <p class="step-desc">Google Gemini 2.5 Flash classifies comments in batches of 25, including replies, into four actionable categories.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Dashboard Preview -->
-  <section class="preview">
-    <div class="preview-inner">
-      <h2 class="preview-title">The whole conversation, not a sample.</h2>
-      <div class="preview-metrics">
-        <div class="pm-card">
-          <div class="pm-label">COMMENT PAGES</div>
-          <div class="pm-value">All</div>
+        <div style="font-family:var(--serif);font-size:20px;font-weight:400;color:var(--ink);letter-spacing:-0.3px;margin-bottom:16px;">
+          What's coming to Commently
         </div>
-        <div class="pm-card">
-          <div class="pm-label">REPLIES</div>
-          <div class="pm-value">Included</div>
-        </div>
-        <div class="pm-card">
-          <div class="pm-label">AI BATCH SIZE</div>
-          <div class="pm-value pm-coral">25</div>
-        </div>
-        <div class="pm-card">
-          <div class="pm-label">CATEGORIES</div>
-          <div class="pm-value pm-green">4</div>
+        <div class="features-row">
+          <div class="feature-chip">
+            <div class="feature-icon">📈</div>
+            <div>
+              <div class="feature-title">Engagement scoring</div>
+              <div class="feature-desc">Rank comments by like count × sentiment × recency to surface the highest-signal feedback first.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
+          <div class="feature-chip">
+            <div class="feature-icon">✉️</div>
+            <div>
+              <div class="feature-title">Auto-reply drafts</div>
+              <div class="feature-desc">One-click reply suggestions for every actionable comment, ready to copy into YouTube Studio.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
+          <div class="feature-chip">
+            <div class="feature-icon">🎬</div>
+            <div>
+              <div class="feature-title">Reel hook generator</div>
+              <div class="feature-desc">Turns "Prime for Reel" comments into formatted reel scripts or pinned comment templates.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
+          <div class="feature-chip">
+            <div class="feature-icon">📊</div>
+            <div>
+              <div class="feature-title">Cross-video trends</div>
+              <div class="feature-desc">Track how sentiment, topics, and complaint volume shift across your last 10 uploads over time.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
+          <div class="feature-chip">
+            <div class="feature-icon">🔔</div>
+            <div>
+              <div class="feature-title">Spike alerts</div>
+              <div class="feature-desc">Get notified when a complaint category spikes or an opportunity comment goes unread past 24 hrs.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
+          <div class="feature-chip">
+            <div class="feature-icon">🤝</div>
+            <div>
+              <div class="feature-title">Opportunity CRM</div>
+              <div class="feature-desc">Track brand collabs and freelance leads through a lightweight pipeline — from comment to closed.</div>
+              <span class="feature-soon">COMING SOON</span>
+            </div>
+          </div>
         </div>
       </div>
-      <a href="/dashboard.html" class="btn-primary">Open Live Dashboard →</a>
-    </div>
-  </section>
 
-  <!-- CTA -->
-  <section class="cta-section">
-    <h2 class="cta-title">Ready to decode<br/>your audience?</h2>
-    <p class="cta-sub">Requires Meta and Gemini credentials. Posts must belong to your connected account.</p>
-    <a href="/dashboard.html" class="btn-primary">Go to Dashboard →</a>
-  </section>
+      <!-- Comment table -->
+      <div class="comment-section">
+        <div class="comment-header">
+          <div class="comment-tabs">
+            <button class="tab-btn active" onclick="setTab(this,'all')">All (16)</button>
+            <button class="tab-btn" onclick="setTab(this,'questions')">Questions (4)</button>
+            <button class="tab-btn" onclick="setTab(this,'complaints')">Complaints (4)</button>
+            <button class="tab-btn" onclick="setTab(this,'opportunities')">Opportunities (4)</button>
+            <button class="tab-btn" onclick="setTab(this,'reel')">Prime for Reel (4)</button>
+          </div>
+          <div style="font-size:13px;color:var(--smoke);">Sorted by priority</div>
+        </div>
+        <table class="comment-table">
+          <thead>
+            <tr>
+              <th style="width:24px;"></th>
+              <th>Comment</th>
+              <th>Category</th>
+              <th>Sentiment</th>
+              <th>Suggested reply</th>
+            </tr>
+          </thead>
+          <tbody id="comment-tbody">
+          </tbody>
+        </table>
+      </div>
 
-  <footer>
-    <span class="footer-logo">C:S / Comment Analyzer</span>
-    <span class="footer-note">Powered by Gemini 2.5 Flash</span>
-  </footer>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
 
+<div id="toast"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────
+const COMMENTS = [];
+
+// ── Comment table ──────────────────────────────────────────────────────
+function renderTable(filter) {
+  const tbody = document.getElementById('comment-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  let rows = [...COMMENTS].sort((a,b) => (b.priority ?? 0) - (a.priority ?? 0));
+  if (filter === 'questions') rows = rows.filter(c => c.category === 'Question');
+  else if (filter === 'complaints') rows = rows.filter(c => c.category === 'Complaint');
+  else if (filter === 'opportunities') rows = rows.filter(c => c.category === 'Opportunity');
+  else if (filter === 'reel') rows = rows.filter(c => c.prime_for_reel);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--smoke);padding:32px;">No comments found for this tab</td></tr>`;
+    return;
+  }
+
+  rows.forEach(c => {
+    const tr = document.createElement('tr');
+    const pClass = c.priority === 2 ? 'p2' : c.priority === 1 ? 'p1' : 'p0';
+    const replyHtml = c.reply
+      ? `<div class="reply-chip">💬 ${c.reply.length > 80 ? esc(c.reply.slice(0,80))+'…' : esc(c.reply)}</div>`
+      : `<span style="font-size:12px;color:var(--smoke);">—</span>`;
+    tr.innerHTML = `
+      <td><span class="priority-dot ${pClass}" title="Priority ${c.priority}"></span></td>
+      <td class="comment-text-cell">${esc(c.text)}</td>
+      <td><span class="cat-pill cat-${esc(c.category)}">${esc(c.category)}</span>${c.prime_for_reel ? '<br><span style="font-size:11px;color:var(--slate);margin-top:4px;display:inline-block;">★ Prime for reel</span>' : ''}</td>
+      <td><span class="sentiment-tag sent-${esc(c.sentiment)}">${esc(c.sentiment)}</span></td>
+      <td>${replyHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Charts ──────────────────────────────────────────────────────────
+function renderCharts(comments) {
+  const valid = comments.filter(c => c.category !== 'Spam');
+  const cats = ['Theme','Question','Complaint','Opportunity','Spam'];
+  const catCounts = cats.map(cat => comments.filter(c => c.category === cat).length);
+  const positive = valid.filter(c => c.sentiment === 'Positive').length;
+  const negative = valid.filter(c => c.sentiment === 'Negative').length;
+  const neutral  = valid.filter(c => c.sentiment === 'Neutral').length;
+  const total = valid.length || 1;
+
+  // Destroy existing charts before re-creating
+  ['barChart','lineChart','donutChart'].forEach(id => {
+    const existing = Chart.getChart(id);
+    if (existing) existing.destroy();
+  });
+
+  const inkBlack = '#17191c';
+  const peach = '#fbe1d1';
+  const sienna = '#5d2a1a';
+  const mist = '#f2f2f3';
+
+  // Bar chart
+  const barCanvas = document.getElementById('barChart');
+  if (barCanvas) {
+    new Chart(barCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['Theme', 'Question', 'Complaint', 'Opportunity', 'Spam'],
+        datasets: [{
+          data: catCounts,
+          backgroundColor: ['#eef2ff','#ecfdf5','#fff1f2','#fef9c3','#f2f2f3'],
+          borderColor: ['#3730a3','#065f46','#be123c','#854d0e','#a3a6af'],
+          borderWidth: 1.5,
+          borderRadius: 8,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 12, family: 'Inter' }, color: '#777b86' }, border: { display: false } },
+          y: { grid: { color: '#f2f2f3' }, ticks: { font: { size: 12, family: 'Inter' }, color: '#777b86', stepSize: 1 }, border: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Line chart: Positivity score per comment batch/item
+  const lineCanvas = document.getElementById('lineChart');
+  if (lineCanvas) {
+    const sample = comments.length > 0 ? comments.slice(0, 12) : [];
+    const labels = sample.length > 0 ? sample.map((_, i) => `c${i+1}`) : ['c1','c2','c3','c4'];
+    const data = sample.length > 0
+      ? sample.map(c => c.sentiment === 'Positive' ? 0.85 : c.sentiment === 'Negative' ? 0.15 : 0.5)
+      : [0.8, 0.6, 0.2, 0.9];
+
+    new Chart(lineCanvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Positivity',
+          data,
+          borderColor: sienna,
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: 'rgba(251,225,209,0.25)',
+          tension: 0.45,
+          pointRadius: 3,
+          pointBackgroundColor: sienna,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' }, color: '#a3a6af' }, border: { display: false } },
+          y: { min: 0, max: 1, grid: { color: '#f2f2f3' }, ticks: { font: { size: 11, family: 'Inter' }, color: '#a3a6af', callback: v => v === 0 ? 'Neg' : v === 0.5 ? 'Mid' : v === 1 ? 'Pos' : '' }, border: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Donut: sentiment split
+  const donutCanvas = document.getElementById('donutChart');
+  if (donutCanvas) {
+    const posVal = positive || (comments.length === 0 ? 62 : 0);
+    const negVal = negative || (comments.length === 0 ? 21 : 0);
+    const neuVal = neutral || (comments.length === 0 ? 17 : 0);
+
+    new Chart(donutCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [{
+          data: [posVal, negVal, neuVal],
+          backgroundColor: ['#2d7a3a', '#c0392b', '#d4d6db'],
+          borderWidth: 0,
+          hoverOffset: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        cutout: '68%',
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+}
+
+// ── Render Stats ──────────────────────────────────────────────────────
+function renderStats(comments) {
+  const valid = comments.filter(c => c.category !== 'Spam');
+  const spam = comments.filter(c => c.category === 'Spam').length;
+  const positive = valid.filter(c => c.sentiment === 'Positive').length;
+  const pct = valid.length ? Math.round(positive / valid.length * 100) : 0;
+  const actionable = comments.filter(c => c.is_actionable).length;
+
+  const statTotal = document.getElementById('stat-total');
+  if (statTotal) statTotal.textContent = comments.length;
+
+  const statPositive = document.getElementById('stat-positive');
+  if (statPositive) {
+    statPositive.innerHTML = `${pct}<span style="font-size:20px;font-weight:400">%</span>`;
+  }
+
+  const statActionable = document.getElementById('stat-actionable');
+  if (statActionable) statActionable.textContent = actionable;
+
+  const statSpam = document.getElementById('stat-spam');
+  if (statSpam) statSpam.textContent = spam;
+}
+
+// ── Render AI Summary ─────────────────────────────────────────────────
+function renderSummary(summary) {
+  if (!summary) return;
+  const bodyEl = document.querySelector('.summary-body');
+  if (bodyEl && summary.sentiment_overview) bodyEl.textContent = summary.sentiment_overview;
+
+  const findingsEl = document.querySelector('.summary-right');
+  if (findingsEl && summary.creator_actions?.length) {
+    findingsEl.innerHTML = summary.creator_actions.map(action => `
+      <div class="finding">
+        <div class="finding-dot"></div>
+        <div class="finding-text">${esc(action)}</div>
+      </div>
+    `).join('');
+  }
+
+  const wordCloudEl = document.querySelector('.wordcloud-area');
+  if (wordCloudEl && summary.top_themes?.length) {
+    wordCloudEl.innerHTML = summary.top_themes.map((theme, i) => `
+      <span class="word-tag" style="font-size:${22 - Math.min(i * 3, 10)}px;">${esc(theme)}</span>
+    `).join('');
+  }
+}
+
+// ── Render Sidebar Videos ─────────────────────────────────────────────
+function renderSidebar(posts) {
+  const list = document.querySelector('.video-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const colors = ['#fbe1d1','#d1f0e0','#d1e8f0','#f0d1f0'];
+  const borders = ['#e0bfae','#a8d5bc','#a8c5d5','#c5a8d5'];
+  posts.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'video-item' + (i === 0 ? ' active' : '');
+    div.innerHTML = `
+      <div class="video-item-title">
+        <span class="video-dot" style="background:${colors[i%4]};border:1.5px solid ${borders[i%4]};"></span>
+        ${esc(p.video_title || p.video_id)}
+      </div>
+      <div class="video-item-meta">${p.total_comments || 0} comments · ${p.created_at?.slice(0,10) || ''}</div>
+    `;
+    div.onclick = () => {
+      document.querySelectorAll('.video-item').forEach(v => v.classList.remove('active'));
+      div.classList.add('active');
+      loadData(p.video_id);
+    };
+    list.appendChild(div);
+  });
+}
+
+// ── Load Data ─────────────────────────────────────────────────────────
+async function loadData(videoId = null) {
+  try {
+    const [postsRes, commentsRes] = await Promise.all([
+      fetch('/api/posts'),
+      fetch('/api/comments' + (videoId ? `?videoId=${encodeURIComponent(videoId)}` : ''))
+    ]);
+    const posts = await postsRes.json();
+    const rawComments = await commentsRes.json();
+    const comments = Array.isArray(rawComments) ? rawComments : (rawComments.comments || []);
+
+    // Replace hardcoded COMMENTS array with mapped fields
+    COMMENTS.length = 0;
+    comments.forEach(c => {
+      COMMENTS.push({
+        id: c.youtube_comment_id || c.id,
+        text: c.raw_text || c.text || c.cleaned_text || '',
+        category: c.category || 'Theme',
+        sentiment: c.sentiment || 'Neutral',
+        is_actionable: c.is_actionable ? 1 : 0,
+        prime_for_reel: (c.prime_for_reel || c.prime_for_video) ? 1 : 0,
+        priority: c.priority !== undefined ? c.priority : 0,
+        reply: c.suggested_reply || c.reply || null,
+        author: c.author_name || c.author || '',
+        created_at: c.created_at || '',
+      });
+    });
+
+    renderSidebar(posts);
+    renderStats(COMMENTS);
+    renderCharts(COMMENTS);
+    renderTable(activeTab);
+    updateMoodHeader(COMMENTS);
+
+    // Update tab counts
+    const qCount = COMMENTS.filter(c => c.category === 'Question').length;
+    const cCount = COMMENTS.filter(c => c.category === 'Complaint').length;
+    const oCount = COMMENTS.filter(c => c.category === 'Opportunity').length;
+    const rCount = COMMENTS.filter(c => c.prime_for_reel).length;
+
+    const tabs = document.querySelectorAll('.tab-btn');
+    if (tabs.length >= 5) {
+      tabs[0].textContent = `All (${COMMENTS.length})`;
+      tabs[1].textContent = `Questions (${qCount})`;
+      tabs[2].textContent = `Complaints (${cCount})`;
+      tabs[3].textContent = `Opportunities (${oCount})`;
+      tabs[4].textContent = `Prime for Reel (${rCount})`;
+    }
+
+    // Update page heading
+    const activeVideo = (videoId ? posts.find(p => p.video_id === videoId) : posts[0]) || posts[0];
+    if (activeVideo) {
+      const titleEl = document.querySelector('.page-title');
+      if (titleEl) {
+        titleEl.innerHTML = `<em>${esc(activeVideo.video_title || activeVideo.video_id)}</em> — comment analysis`;
+      }
+      const metaEl = document.querySelector('.page-meta');
+      if (metaEl) {
+        const createdStr = activeVideo.created_at ? ` · Analysed ${activeVideo.created_at.slice(0, 10)}` : '';
+        metaEl.textContent = `${COMMENTS.length} comments across ${posts.length} video${posts.length === 1 ? '' : 's'}${createdStr} · Powered by LangChain & Gemini`;
+      }
+    }
+
+    const targetSummaryId = videoId || activeVideo?.video_id;
+    if (targetSummaryId) {
+      const sumRes = await fetch(`/api/summary/${encodeURIComponent(targetSummaryId)}`);
+      if (sumRes.ok) renderSummary(await sumRes.json());
+    }
+  } catch (err) {
+    console.error('Failed to load data:', err);
+    toast('Error loading comments data: ' + err.message);
+  }
+}
+
+// ── Interactions ──────────────────────────────────────────────────────
+let activeTab = 'all';
+function setTab(el, key) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  activeTab = key;
+  renderTable(key);
+}
+
+function setNav(el, key) {
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (key === 'comments') {
+    document.querySelector('.comment-section')?.scrollIntoView({ behavior: 'smooth' });
+  } else if (key === 'sentiment') {
+    document.getElementById('mood-header')?.scrollIntoView({ behavior: 'smooth' });
+  } else if (key === 'topics') {
+    document.querySelector('.wordcloud-card')?.scrollIntoView({ behavior: 'smooth' });
+  } else if (key === 'reel') {
+    const reelTab = document.querySelectorAll('.tab-btn')[4];
+    if (reelTab) setTab(reelTab, 'reel');
+    document.querySelector('.comment-section')?.scrollIntoView({ behavior: 'smooth' });
+  } else if (key === 'opportunities') {
+    const oppTab = document.querySelectorAll('.tab-btn')[3];
+    if (oppTab) setTab(oppTab, 'opportunities');
+    document.querySelector('.comment-section')?.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function selectVideo(el) {
+  document.querySelectorAll('.video-item').forEach(v => v.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Analyse Video ─────────────────────────────────────────────────────
+async function analyseVideo() {
+  const inputEl = document.getElementById('url-input');
+  const val = inputEl ? inputEl.value.trim() : '';
+  if (!val || (!val.includes('youtube.com') && !val.includes('youtu.be') && !/^[a-zA-Z0-9_-]{11}$/.test(val))) {
+    toast('Please enter a valid YouTube URL'); return;
+  }
+  const btn = document.querySelector('.analyse-btn');
+  if (btn) {
+    btn.textContent = 'Analysing…';
+    btn.disabled = true;
+  }
+  try {
+    const res = await fetch('/analyse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: val })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Analysis failed');
+    await loadData(data.videoId);
+    toast(`${data.videoTitle || data.videoId} — ${data.totalFetched || (data.comments ? data.comments.length : 0)} comments analysed`);
+    if (inputEl) inputEl.value = '';
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    if (btn) {
+      btn.textContent = 'Analyse →';
+      btn.disabled = false;
+    }
+  }
+}
+
+// Enter key support for #url-input
+document.getElementById('url-input')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    analyseVideo();
+  }
+});
+
+function exportCSV() {
+  const headers = ['ID','Text','Category','Sentiment','Actionable','Prime for Reel','Priority','Suggested Reply'];
+  const rows = COMMENTS.map(c => [
+    c.id,
+    `"${(c.text || '').replace(/"/g,'""')}"`,
+    c.category, c.sentiment,
+    c.is_actionable ? 'Yes' : 'No',
+    c.prime_for_reel ? 'Yes' : 'No',
+    c.priority,
+    c.reply ? `"${c.reply.replace(/"/g,'""')}"` : ''
+  ].join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'commently-export.csv';
+  a.click();
+  toast('CSV exported →');
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Mood header ───────────────────────────────────────────────────────
+function updateMoodHeader(comments) {
+  const valid = comments.filter(c => c.category !== 'Spam');
+  const total = valid.length;
+  if (!total) return;
+  const positiveCount = valid.filter(c => c.sentiment === 'Positive').length;
+  const pct = Math.round((positiveCount / total) * 100);
+
+  let emoji, label, color;
+  if (pct >= 60) {
+    emoji = '😊'; label = 'Overall mood is positive'; color = '#2d7a3a';
+  } else if (pct >= 35) {
+    emoji = '😐'; label = 'Overall mood is mixed'; color = '#b45309';
+  } else {
+    emoji = '😟'; label = 'Overall mood is negative'; color = '#c0392b';
+  }
+
+  const emojiEl = document.getElementById('mood-emoji');
+  if (emojiEl) emojiEl.textContent = emoji;
+
+  const labelEl = document.getElementById('mood-label');
+  if (labelEl) {
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+  }
+
+  const scoreEl = document.getElementById('mood-score');
+  if (scoreEl) {
+    scoreEl.innerHTML = `${pct}<span style="font-size:20px;font-weight:400;color:var(--slate);">%</span>`;
+  }
+
+  const subEl = document.getElementById('mood-sub');
+  if (subEl) {
+    subEl.textContent = `${pct}% positive sentiment across ${total} analysed comments`;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadData();
+</script>
 </body>
 </html>

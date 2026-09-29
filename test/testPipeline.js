@@ -2,45 +2,45 @@ require('dotenv').config();
 const { processComment } = require('../src/hustleBot');
 const { classifyComment } = require('../src/nlpPipeline');
 
-const mockInstagramComments = [
+const mockYouTubeComments = [
   {
-    id: "ic_001",
+    id: "yt_001",
     user: "alex_tech",
     text: "Can I get pricing for the enterprise tier? Need this for a team of 10! 🔥",
   },
   {
-    id: "ic_002",
+    id: "yt_002",
     user: "crypto_spammer_99",
     text: "DM me on WhatsApp +12345678 to double your crypto investments now! 💰",
   },
   {
-    id: "ic_003",
+    id: "yt_003",
     user: "sad_user",
-    text: "The login button is completely broken on the iOS app update. Please fix asap 😡👎",
+    text: "The audio is completely out of sync on the video. Please fix asap 😡👎",
   },
   {
-    id: "ic_004",
+    id: "yt_004",
     user: "fan_girl",
-    text: "This new update looks so clean and awesome!! Loving the UI design ❤️😍👏",
+    text: "This new video looks so clean and awesome!! Loving the UI design ❤️😍👏",
   },
   {
-    id: "ic_005",
+    id: "yt_005",
     user: "agency_owner",
     text: "We run a marketing agency with 50+ clients and would love to partner with you guys. Who can I talk to?",
   },
   {
-    id: "ic_006",
+    id: "yt_006",
     user: "bot_account",
-    text: "Promoted on @top_influencer_page send pic on inbox",
+    text: "Promoted on @top_channel send pic on inbox",
   }
 ];
 
 async function runTestPipeline() {
   console.log("=================================================");
-  console.log("   TESTING INSTAGRAM COMMENT PROCESSING PIPELINE  ");
+  console.log("    TESTING YOUTUBE COMMENT PROCESSING PIPELINE   ");
   console.log("=================================================\n");
 
-  for (const item of mockInstagramComments) {
+  for (const item of mockYouTubeComments) {
     console.log(`-------------------------------------------------`);
     console.log(`[Input Comment] (@${item.user}): "${item.text}"`);
 

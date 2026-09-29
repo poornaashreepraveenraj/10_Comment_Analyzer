@@ -1,14 +1,65 @@
-# Instagram Comment Analyzer
+# YouTube Comment Analyzer
 
-This project fetches comments and replies from posts managed by a connected Instagram professional account, filters spam and translates emojis, then uses Gemini to categorize the results into Themes, Questions, Complaints, and Opportunities.
+AI-powered comment categorization & lead extraction platform for YouTube creators. Categorizes YouTube video comments into **Themes**, **Questions**, **Complaints**, and **Opportunities**, filters promotional spam, translates emojis into semantic descriptors, and flags high-leverage content ideas ("Reply with Video").
+
+## Features
+
+- **YouTube Video Ingestion**: Ingest comments from any YouTube video URL (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`, `youtube.com/embed/...`) or direct 11-character video ID.
+- **YouTube Data API v3**: Fetches up to 100 top relevance comment threads using the `commentThreads.list` endpoint.
+- **Audience Intelligence & Categorization**:
+  - **Themes**: Opinions, praise, hype, community discussions.
+  - **Questions**: Queries, how-tos, tutorial requests, software inquiries.
+  - **Complaints**: Bug reports, audio dissatisfaction, issues.
+  - **Opportunities**: Business inquiries, brand deals, collaborations, sponsorship leads.
+- **Spam Filtering & Emoji Translation**: Rule-based heuristics to block crypto/promotional spam and convert unicode emojis into contextual text descriptions.
+- **Studio Dashboard**: Sleek Channel Studio design system with metric cards, filter pills, and history sidebar showing video titles.
+- **Flexible Imports**: Also supports CSV dataset upload and raw comment pasting.
 
 ## Setup
 
-1. Install Node.js 20 or later, then run `npm install`.
-2. Copy `.env.example` to `.env` and set the credentials for your Meta professional account and Gemini API.
-3. In Meta for Developers, configure Instagram Graph API access and grant the token the permissions required to read the account's media and comments, including `instagram_basic` and `instagram_manage_comments`.
-4. Run `npm test` to execute the local tests, then run `npm start` and open `http://localhost:3000`.
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-## Dashboard
+2. **Configure Environment Variables**:
+   Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   Configure the following in `.env`:
+   - `PORT`: Server port (default `3000`)
+   - `YOUTUBE_API_KEY`: Google Cloud / YouTube Data API v3 key
+   - `GOOGLE_API_KEY` (or `GEMINI_API_KEY`): Google Gemini API key for NLP comment classification
+   - `LANGSMITH_TRACING`: Set to `true` to enable LangSmith tracing and observability
+   - `LANGSMITH_API_KEY`: LangSmith API key (`lsv2_pt_...`) from [smith.langchain.com](https://smith.langchain.com)
+   - `LANGSMITH_PROJECT`: LangSmith project name (default: `comment-analysis`)
+   - `LANGSMITH_ENDPOINT`: LangSmith endpoint (default: `https://api.smith.langchain.com`)
 
-Paste a permalink from the connected account into the dashboard. The analyzer follows Graph API pagination for the account's media, top-level comments, and replies, then classifies all fetched entries in batches of 25. Posts from accounts you do not manage are not available through this integration.
+   *(Note: If `YOUTUBE_API_KEY` or `GOOGLE_API_KEY` are not set, the platform uses smart mock heuristics. If `LANGSMITH_TRACING` is disabled or API key is omitted, the app operates normally in modular fallback mode.)*
+
+3. **Run Tests**:
+   ```bash
+   npm test
+   ```
+
+4. **Verify LangSmith Tracing**:
+   ```bash
+   npm run test:langsmith
+   ```
+
+5. **Start the Application**:
+   ```bash
+   npm start
+   ```
+   Open `http://localhost:3000` in your browser.
+
+## API Endpoints
+
+- `POST /analyse` — Ingests a YouTube video URL or ID:
+  - Body: `{ "url": "https://www.youtube.com/watch?v=..." }`
+  - Returns: `{ "videoId": "...", "videoTitle": "...", "channelName": "...", "commentCount": 8, "metrics": {...}, "comments": [...] }`
+- `GET /api/posts` — Lists all analyzed videos (`video_id`, `video_title`, `channel_name`, `total_comments`, `created_at`).
+- `GET /api/comments` — Returns all comments or comments for a specific video (`?video_id=...`).
+- `GET /api/posts/:videoId/metrics` — Returns categorization metrics for a specific video.
+- `POST /api/analyze-import` — Ingests comments via CSV text or pasted raw lines.
