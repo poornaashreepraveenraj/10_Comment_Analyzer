@@ -101,7 +101,7 @@ async function fetchVideoDetails(videoId, apiKey) {
  * Live InnerTube fallback to fetch real comments without an API key.
  * @param {string} videoId
  */
-async function fetchViaInnerTube(videoId) {
+async function fetchViaInnerTube(videoId, maxComments = 500) {
   const meta = await fetchVideoDetails(videoId, null);
 
   const pageRes = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
@@ -136,8 +136,9 @@ async function fetchViaInnerTube(videoId) {
   const seenIds = new Set();
   const replyTokens = [];
   let pages = 0;
+  const maxPages = Math.ceil(maxComments / 20) + 5;
 
-  while (continuationToken && pages < 10) {
+  while (continuationToken && comments.length < maxComments && pages < maxPages) {
     pages++;
     try {
       const nextRes = await fetch(`https://www.youtube.com/youtubei/v1/next?key=${innertubeKey}`, {
@@ -266,13 +267,19 @@ async function fetchViaInnerTube(videoId) {
  * @param {string} videoId
  * @returns {Promise<{ videoTitle: string, channelName: string, comments: Array<Object> }>}
  */
-async function fetchComments(videoId) {
+async function fetchComments(videoId, options = {}) {
   const timestamp = new Date().toISOString();
   const apiKey = process.env.YOUTUBE_API_KEY;
+  const isAll = options === 'all' || options?.maxComments === 'all' || options?.all === true;
+  const maxComments = isAll
+    ? 10000
+    : (typeof options === 'number'
+        ? (options <= 0 ? 10000 : options)
+        : parseInt(options?.maxComments || options?.limit || process.env.MAX_YOUTUBE_COMMENTS || 10000, 10));
 
   if (!apiKey || apiKey === 'your_youtube_api_key_here') {
     try {
-      const live = await fetchViaInnerTube(videoId);
+      const live = await fetchViaInnerTube(videoId, maxComments);
       if (live.comments && live.comments.length > 0) {
         return live;
       }
@@ -326,59 +333,86 @@ async function fetchComments(videoId) {
     };
   }
 
-  const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${encodeURIComponent(videoId)}&maxResults=100&order=relevance&key=${encodeURIComponent(apiKey)}`;
-
   try {
-    const [commentRes, meta] = await Promise.all([
-      fetch(url),
-      fetchVideoDetails(videoId, apiKey),
-    ]);
-
-    if (!commentRes.ok) {
-      const status = commentRes.status;
-      const errBody = await commentRes.json().catch(() => null);
-      const reason = errBody?.error?.errors?.[0]?.reason || '';
-      const message = errBody?.error?.message || commentRes.statusText;
-
-      console.error(`[${timestamp}] [videoId: ${videoId}] YouTube API Error ${status} (${reason}): ${message}`);
-
-      if (
-        status === 404 ||
-        reason === 'videoNotFound' ||
-        reason === 'commentsDisabled' ||
-        /disabled comments|video not found/i.test(message)
-      ) {
-        throw new Error('Video not found or comments are disabled');
-      }
-
-      if (status === 403 || reason === 'quotaExceeded' || /quota/i.test(message)) {
-        throw new Error('YouTube API quota exceeded — try again tomorrow');
-      }
-
-      throw new Error(`YouTube API error: ${message}`);
-    }
-
-    const data = await commentRes.json();
-    const items = data.items || [];
+    const metaPromise = fetchVideoDetails(videoId, apiKey);
     const comments = [];
+    let pageToken = '';
+    let pageCount = 0;
+    const maxPages = Math.ceil(maxComments / 100);
 
-    for (const item of items) {
-      const top = item.snippet?.topLevelComment?.snippet;
-      const commentId = item.snippet?.topLevelComment?.id || item.id;
-      const text = top?.textOriginal || top?.textDisplay || '';
+    while (comments.length < maxComments && pageCount < maxPages) {
+      pageCount++;
+      let url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${encodeURIComponent(videoId)}&maxResults=100&order=relevance&key=${encodeURIComponent(apiKey)}`;
+      if (pageToken) {
+        url += `&pageToken=${encodeURIComponent(pageToken)}`;
+      }
 
-      if (text) {
-        comments.push({
-          youtube_comment_id: commentId,
-          id: commentId,
-          text,
-          authorName: top?.authorDisplayName || 'YouTube User',
-          user: top?.authorDisplayName || 'YouTube User',
-          likeCount: top?.likeCount || 0,
-          publishedAt: top?.publishedAt || timestamp,
-        });
+      const commentRes = await fetch(url);
+
+      if (!commentRes.ok) {
+        const status = commentRes.status;
+        const errBody = await commentRes.json().catch(() => null);
+        const reason = errBody?.error?.errors?.[0]?.reason || '';
+        const message = errBody?.error?.message || commentRes.statusText;
+
+        console.error(`[${timestamp}] [videoId: ${videoId}] YouTube API Error ${status} (${reason}): ${message}`);
+
+        if (
+          status === 404 ||
+          reason === 'videoNotFound' ||
+          reason === 'commentsDisabled' ||
+          /disabled comments|video not found/i.test(message)
+        ) {
+          throw new Error('Video not found or comments are disabled');
+        }
+
+        if (status === 403 || reason === 'quotaExceeded' || /quota/i.test(message)) {
+          if (comments.length > 0) {
+            console.warn(`[${timestamp}] [videoId: ${videoId}] Quota reached during pagination. Returning ${comments.length} fetched comments.`);
+            break;
+          }
+          throw new Error('YouTube API quota exceeded — try again tomorrow');
+        }
+
+        if (comments.length > 0) {
+          console.warn(`[${timestamp}] [videoId: ${videoId}] Error on page ${pageCount}. Returning ${comments.length} fetched comments.`);
+          break;
+        }
+
+        throw new Error(`YouTube API error: ${message}`);
+      }
+
+      const data = await commentRes.json();
+      const items = data.items || [];
+      if (items.length === 0) break;
+
+      for (const item of items) {
+        const top = item.snippet?.topLevelComment?.snippet;
+        const commentId = item.snippet?.topLevelComment?.id || item.id;
+        const text = top?.textOriginal || top?.textDisplay || '';
+
+        if (text) {
+          comments.push({
+            youtube_comment_id: commentId,
+            id: commentId,
+            text,
+            authorName: top?.authorDisplayName || 'YouTube User',
+            user: top?.authorDisplayName || 'YouTube User',
+            likeCount: top?.likeCount || 0,
+            publishedAt: top?.publishedAt || timestamp,
+          });
+        }
+
+        if (comments.length >= maxComments) break;
+      }
+
+      pageToken = data.nextPageToken;
+      if (!pageToken) {
+        break;
       }
     }
+
+    const meta = await metaPromise;
 
     return {
       videoTitle: meta.videoTitle,

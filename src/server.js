@@ -51,8 +51,11 @@ app.post('/analyse', async (req, res) => {
       });
     }
 
-    // 1. Fetch comments from YouTube Data API v3
-    const { videoTitle, channelName, comments } = await fetchComments(videoId);
+    // 1. Fetch comments from YouTube Data API v3 (defaults to fetching all comments)
+    const reqLimit = req.body.maxComments || req.body.limit;
+    const isAll = reqLimit === 'all' || !reqLimit;
+    const maxComments = isAll ? 10000 : parseInt(reqLimit, 10);
+    const { videoTitle, channelName, comments } = await fetchComments(videoId, { maxComments });
 
     // 2. Pre-process comments with spam pre-filter regex and emoji translation
     const commentsToAgent = [];
@@ -198,7 +201,7 @@ app.get('/api/comments', (req, res) => {
       sentiment,
       priority,
       page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 200,
+      limit: parseInt(limit, 10) || 1000,
     });
 
     if (paginated === 'true') {

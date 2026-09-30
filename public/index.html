@@ -598,6 +598,16 @@ html, body {
           placeholder="Paste a YouTube URL to analyse…"
         />
       </div>
+      <div style="display:flex;align-items:center;margin-right:8px;">
+        <select id="max-comments-select" title="Comment analysis depth" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--charcoal);cursor:pointer;outline:none;font-weight:500;">
+          <option value="all" selected>All comments (Full thread)</option>
+          <option value="100">Top 100 comments</option>
+          <option value="300">Top 300 comments</option>
+          <option value="500">Top 500 comments</option>
+          <option value="1000">Top 1,000 comments</option>
+          <option value="2000">Top 2,000 comments</option>
+        </select>
+      </div>
       <button class="analyse-btn" onclick="analyseVideo()">Analyse →</button>
       <div class="topbar-actions">
         <button class="ghost-btn" onclick="exportCSV()">↓ Export CSV</button>
@@ -1217,10 +1227,12 @@ async function analyseVideo() {
     btn.disabled = true;
   }
   try {
+    const depthEl = document.getElementById('max-comments-select');
+    const maxComments = depthEl ? depthEl.value : 'all';
     const res = await fetch('/analyse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: val })
+      body: JSON.stringify({ url: val, maxComments })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Analysis failed');
