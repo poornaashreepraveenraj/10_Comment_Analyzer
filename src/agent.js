@@ -278,7 +278,7 @@ async function analyseComments(comments = [], videoTitle = 'YouTube Video') {
     return { results, summary, partial: false };
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
   const model = new ChatGoogleGenerativeAI({
     model: modelName,
     temperature: 0.2,
